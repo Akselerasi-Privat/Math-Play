@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Duels Arena: Ultimate Edition ⚔️☄️</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bungee&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #070a12;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+
+        .font-bungee {
+            font-family: 'Bungee', cursive;
+        }
+
+        /* Screen Shake Animation on Impact */
+        @keyframes arenaShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            15% { transform: translate(-14px, 10px) rotate(-2deg); }
+            30% { transform: translate(14px, -10px) rotate(2deg); }
+            45% { transform: translate(-10px, 6px) rotate(-1deg); }
+            60% { transform: translate(10px, -6px) rotate(1deg); }
+            75% { transform: translate(-5px, 3px) rotate(0deg); }
+        }
+
+        .animate-impact-shake {
+            animation: arenaShake 0.4s ease-in-out;
+        }
+
+        /* Floating Damage Text Animation */
+        @keyframes damageFloat {
+            0% { opacity: 1; transform: translateY(0) scale(0.6); }
+            30% { opacity: 1; transform: translateY(-40px) scale(1.4); }
+            100% { opacity: 0; transform: translateY(-90px) scale(1); }
+        }
+
+        .floating-damage-txt {
+            position: absolute;
+            animation: damageFloat 1s forwards ease-out;
+            pointer-events: none;
+            z-index: 60;
+            font-family: 'Bungee', cursive;
+            text-shadow: 0 4px 14px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        /* Avatar Idle Floating */
+        @keyframes floatHero {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-float-hero {
+            animation: floatHero 2.4s ease-in-out infinite;
+        }
+
+        /* Player 1 Action Buttons */
+        .btn-p1 {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            box-shadow: 0 6px 0 #7f1d1d, 0 10px 18px -3px rgba(239, 68, 68, 0.4);
+            transition: all 0.08s ease;
+        }
+        .btn-p1:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #7f1d1d, 0 4px 6px -1px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Player 2 Action Buttons */
+        .btn-p2 {
+            background: linear-gradient(135deg, #06b6d4 0%, #0369a1 100%);
+            box-shadow: 0 6px 0 #0c4a6e, 0 10px 18px -3px rgba(6, 182, 212, 0.4);
+            transition: all 0.08s ease;
+        }
+        .btn-p2:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0c4a6e, 0 4px 6px -1px rgba(6, 182, 212, 0.4);
+        }
+
+        /* Ultimate Button Pulsing Flame */
+        @keyframes ultPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(234, 179, 8, 0.8); }
+            50% { transform: scale(1.06); box-shadow: 0 0 35px rgba(239, 68, 68, 1); }
+        }
+        .ult-btn-active {
+            animation: ultPulse 0.8s infinite ease-in-out;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%) !important;
+        }
+
+        /* Combo Badge Glow */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(234, 179, 8, 0.7); transform: scale(1); }
+            50% { box-shadow: 0 0 25px rgba(234, 179, 8, 1); transform: scale(1.08); }
+        }
+        .combo-badge-glow {
+            animation: pulseGlow 0.9s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between select-none overflow-hidden bg-slate-950">
+
+    <!-- TOP CONTROL & STATUS HEADER -->
+    <header class="bg-slate-900/95 border-b-2 border-slate-800 px-3 md:px-5 py-2 flex items-center justify-between z-30 shadow-xl">
+        <!-- Title & Icon -->
+        <div class="flex items-center space-x-2">
+            <span class="text-xl md:text-2xl">☄️⚔️</span>
+            <h1 class="text-base md:text-2xl font-bungee tracking-wider bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                MATH DUELS
+            </h1>
+        </div>
+
+        <!-- Operation & Level Status Badge -->
+        <div class="hidden sm:flex items-center space-x-3 bg-slate-950 px-4 py-1 rounded-full border border-slate-700/80 shadow-inner">
+            <div class="text-xs text-slate-400">
+                MODE: <span id="hdrGameModeText" class="font-bold text-amber-400">1v1 VERSUS</span>
+            </div>
+            <div class="h-3 w-px bg-slate-700"></div>
+            <div class="text-xs text-slate-400">
+                OPERASI: <span id="hdrOpText" class="font-bold text-cyan-400">Perkalian (×)</span>
+            </div>
+            <div class="h-3 w-px bg-slate-700"></div>
+            <div class="text-xs text-slate-400">
+                LEVEL: <span id="hdrLevelText" class="font-bold text-amber-400">1 (Satuan)</span>
+            </div>
+        </div>
+
+        <!-- Timer Display -->
+        <div class="bg-amber-500/10 border border-amber-500/40 px-3.5 py-1 rounded-full flex items-center space-x-2">
+            <span class="text-amber-400 font-bold text-sm">⏱️</span>
+            <span id="timerDisplay" class="font-bungee text-base md:text-lg text-amber-400">01:00</span>
+        </div>
+
+        <!-- Utility Buttons -->
+        <div class="flex items-center space-x-2">
+            <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs md:text-sm transition font-bold flex items-center gap-1">
+                ← <span class="hidden md:inline">Menu Utama</span>
+            </a>
+            <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs md:text-sm transition font-bold">
+                🔊 <span class="hidden md:inline">Suara</span>
+            </button>
+            <button onclick="openSetupModal()" class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-bungee text-xs md:text-sm shadow-md transition">
+                ⚙️ <span class="hidden md:inline">Pengaturan</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MIDDLE VISUAL BATTLE ARENA WITH CANVAS OVERLAY -->
+    <main id="battleArena" class="relative flex-1 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-between px-4 sm:px-12 py-2 overflow-hidden border-b-2 border-slate-800">
+        
+        <!-- Canvas for 60fps Projectiles, Lasers & Particle Explosions -->
+        <canvas id="fxCanvas" class="absolute inset-0 z-20 pointer-events-none w-full h-full"></canvas>
+
+        <!-- Arena Grid Background -->
+        <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:28px_28px] opacity-30 pointer-events-none"></div>
+
+        <!-- PLAYER 1 HERO (LEFT) -->
+        <div id="p1HeroBox" class="relative z-10 flex flex-col items-center w-5/12 max-w-xs">
+            <!-- P1 Header Info & Status -->
+            <div class="flex items-center justify-between w-full mb-1">
+                <span id="p1NameTag" class="font-bungee text-red-400 text-xs md:text-sm tracking-wide flex items-center gap-1">
+                    🔥 P1
+                </span>
+                <span id="p1ShieldIcon" class="hidden text-sm animate-bounce" title="Perisai Aktif!">🛡️</span>
+                <span id="p1ComboBadge" class="hidden text-[10px] md:text-xs bg-amber-500 text-slate-950 font-bungee px-2 py-0.5 rounded-full combo-badge-glow">
+                    3x KOMBO!
+                </span>
+            </div>
+
+            <!-- P1 Health Bar -->
+            <div class="w-full bg-slate-900 h-5 md:h-6 rounded-full p-1 border border-red-500/50 relative shadow-inner">
+                <div id="p1HpBar" class="bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 h-full rounded-full transition-all duration-300 w-full"></div>
+                <span id="p1HpText" class="absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-bold text-white drop-shadow">100 / 100 HP</span>
+            </div>
+
+            <!-- P1 Ultimate Bar -->
+            <div class="w-full bg-slate-950 h-2 rounded-full mt-1 border border-amber-500/30 overflow-hidden">
+                <div id="p1UltBar" class="bg-gradient-to-r from-amber-500 to-red-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- P1 Avatar Graphic -->
+            <div id="p1Avatar" class="relative mt-2 animate-float-hero transition-transform">
+                <div id="p1AvatarSvgContainer"></div>
+            </div>
+        </div>
+
+        <!-- CENTER VS / BOSS EMBLEM & SCOREBOARD -->
+        <div class="relative z-10 flex flex-col items-center justify-center">
+            
+            <!-- Standard VS Emblem -->
+            <div id="vsEmblem" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 flex items-center justify-center font-bungee text-lg sm:text-2xl border-4 border-slate-900 shadow-2xl text-white italic transform -rotate-6">
+                VS
+            </div>
+
+            <!-- Boss Hero Box (Visible in Co-op Raid Mode) -->
+            <div id="bossHeroBox" class="hidden flex-col items-center animate-float-hero">
+                <div class="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 relative drop-shadow-[0_10px_25px_rgba(220,38,38,0.6)]" id="bossAvatarSvg">
+                    <!-- Boss Monster SVG -->
+                    <svg viewBox="0 0 120 120" class="w-full h-full">
+                        <circle cx="60" cy="60" r="54" fill="#450a0a"/>
+                        <path d="M 20 20 L 40 45 L 10 50 Z" fill="#ef4444"/>
+                        <path d="M 100 20 L 80 45 L 110 50 Z" fill="#ef4444"/>
+                        <circle cx="42" cy="50" r="12" fill="#000"/>
+                        <circle cx="78" cy="50" r="12" fill="#000"/>
+                        <circle cx="42" cy="50" r="5" fill="#facc15"/>
+                        <circle cx="78" cy="50" r="5" fill="#facc15"/>
+                        <path d="M 30 80 Q 60 110 90 80 Q 60 90 30 80 Z" fill="#dc2626"/>
+                        <polygon points="40,81 45,90 50,81" fill="#fff"/>
+                        <polygon points="70,81 75,90 80,81" fill="#fff"/>
+                    </svg>
+                </div>
+                <div class="w-36 sm:w-48 bg-slate-900 h-5 rounded-full p-1 border border-red-600 relative shadow-inner mt-1">
+                    <div id="bossHpBar" class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 h-full rounded-full transition-all duration-300 w-full"></div>
+                    <span id="bossHpText" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow">RAJA MONSTER: 300 HP</span>
+                </div>
+            </div>
+
+            <!-- Score Board -->
+            <div id="scoreBoardBox" class="mt-2 bg-slate-900/90 border border-slate-700/80 px-3 py-1 rounded-xl text-center shadow-lg">
+                <div class="text-[9px] md:text-[10px] text-slate-400 font-bold tracking-widest">SKOR KO</div>
+                <div class="text-sm sm:text-base font-bungee text-slate-100 space-x-2">
+                    <span id="p1ScoreText" class="text-red-400">0</span>
+                    <span class="text-slate-600">:</span>
+                    <span id="p2ScoreText" class="text-cyan-400">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLAYER 2 HERO (RIGHT) -->
+        <div id="p2HeroBox" class="relative z-10 flex flex-col items-center w-5/12 max-w-xs">
+            <!-- P2 Header Info & Status -->
+            <div class="flex items-center justify-between w-full mb-1">
+                <span id="p2ComboBadge" class="hidden text-[10px] md:text-xs bg-amber-500 text-slate-950 font-bungee px-2 py-0.5 rounded-full combo-badge-glow">
+                    3x KOMBO!
+                </span>
+                <span id="p2ShieldIcon" class="hidden text-sm animate-bounce" title="Perisai Aktif!">🛡️</span>
+                <span id="p2NameTag" class="font-bungee text-cyan-400 text-xs md:text-sm tracking-wide flex items-center gap-1 ml-auto">
+                    P2 ⚡
+                </span>
+            </div>
+
+            <!-- P2 Health Bar -->
+            <div class="w-full bg-slate-900 h-5 md:h-6 rounded-full p-1 border border-cyan-500/50 relative shadow-inner">
+                <div id="p2HpBar" class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 h-full rounded-full transition-all duration-300 w-full ml-auto"></div>
+                <span id="p2HpText" class="absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-bold text-white drop-shadow">100 / 100 HP</span>
+            </div>
+
+            <!-- P2 Ultimate Bar -->
+            <div class="w-full bg-slate-950 h-2 rounded-full mt-1 border border-amber-500/30 overflow-hidden">
+                <div id="p2UltBar" class="bg-gradient-to-r from-cyan-400 to-amber-400 h-full w-0 transition-all duration-300 ml-auto"></div>
+            </div>
+
+            <!-- P2 Avatar Graphic -->
+            <div id="p2Avatar" class="relative mt-2 animate-float-hero transition-transform">
+                <div id="p2AvatarSvgContainer"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LOWER SPLIT SCREEN CONTROLS (PLAYER 1 & PLAYER 2) -->
+    <div class="h-[50%] min-h-[300px] grid grid-cols-2 gap-2 p-2 bg-slate-900 border-t border-slate-800">
+
+        <!-- ================= PLAYER 1 ZONE (LEFT) ================= -->
+        <section id="p1Zone" class="bg-gradient-to-b from-red-950/30 via-slate-950 to-slate-950 border-2 border-red-500/30 rounded-2xl p-2.5 flex flex-col justify-between relative overflow-hidden">
+            
+            <div class="flex items-center justify-between border-b border-red-500/20 pb-1">
+                <span class="text-xs font-bungee text-red-400">PEMAIN 1 (MERAH)</span>
+                <!-- Ultimate Button P1 -->
+                <button id="p1UltBtn" onclick="triggerUltimate(1)" disabled class="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-500 font-bungee text-[10px] border border-slate-700 transition">
+                    ⚡ JURUS ULTIMATE
+                </button>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-slate-900/90 border-2 border-red-500/40 rounded-xl p-2 text-center my-1 shadow-inner relative">
+                <!-- Power-Up Active Badge -->
+                <div id="p1PowerUpBadge" class="hidden absolute -top-3 left-2 bg-amber-500 text-slate-950 text-[9px] font-bungee px-2 py-0.5 rounded-full shadow">
+                    💥 DOUBLE DAMAGE!
+                </div>
+                <div class="text-[9px] md:text-[10px] text-red-300/80 font-bold uppercase tracking-wider mb-0.5">SOAL MATEMATIKA:</div>
+                <div id="p1QuestionText" class="font-bungee text-2xl sm:text-3xl md:text-4xl text-white tracking-wide">
+                    8 × 7 = ?
+                </div>
+            </div>
+
+            <!-- 4 Multiple Choice Answer Buttons -->
+            <div class="grid grid-cols-2 gap-2 mt-1">
+                <button onclick="handleAnswer(1, 0)" id="p1Opt0" class="btn-p1 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">56</button>
+                <button onclick="handleAnswer(1, 1)" id="p1Opt1" class="btn-p1 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">48</button>
+                <button onclick="handleAnswer(1, 2)" id="p1Opt2" class="btn-p1 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">64</button>
+                <button onclick="handleAnswer(1, 3)" id="p1Opt3" class="btn-p1 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">54</button>
+            </div>
+
+            <!-- Incorrect / Frozen Stun Overlay -->
+            <div id="p1StunOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center rounded-2xl">
+                <span id="p1StunIcon" class="text-3xl animate-bounce">💥</span>
+                <span id="p1StunMsg" class="font-bungee text-red-400 text-xs mt-1">SALAH! TERKUNCI 0.8s</span>
+            </div>
+        </section>
+
+        <!-- ================= PLAYER 2 ZONE (RIGHT) ================= -->
+        <section id="p2Zone" class="bg-gradient-to-b from-cyan-950/30 via-slate-950 to-slate-950 border-2 border-cyan-500/30 rounded-2xl p-2.5 flex flex-col justify-between relative overflow-hidden">
+            
+            <div class="flex items-center justify-between border-b border-cyan-500/20 pb-1">
+                <span class="text-xs font-bungee text-cyan-400">PEMAIN 2 (BIRU)</span>
+                <!-- Ultimate Button P2 -->
+                <button id="p2UltBtn" onclick="triggerUltimate(2)" disabled class="px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-500 font-bungee text-[10px] border border-slate-700 transition">
+                    ⚡ JURUS ULTIMATE
+                </button>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-slate-900/90 border-2 border-cyan-500/40 rounded-xl p-2 text-center my-1 shadow-inner relative">
+                <!-- Power-Up Active Badge -->
+                <div id="p2PowerUpBadge" class="hidden absolute -top-3 left-2 bg-amber-500 text-slate-950 text-[9px] font-bungee px-2 py-0.5 rounded-full shadow">
+                    💥 DOUBLE DAMAGE!
+                </div>
+                <div class="text-[9px] md:text-[10px] text-cyan-300/80 font-bold uppercase tracking-wider mb-0.5">SOAL MATEMATIKA:</div>
+                <div id="p2QuestionText" class="font-bungee text-2xl sm:text-3xl md:text-4xl text-white tracking-wide">
+                    9 × 6 = ?
+                </div>
+            </div>
+
+            <!-- 4 Multiple Choice Answer Buttons -->
+            <div class="grid grid-cols-2 gap-2 mt-1">
+                <button onclick="handleAnswer(2, 0)" id="p2Opt0" class="btn-p2 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">54</button>
+                <button onclick="handleAnswer(2, 1)" id="p2Opt1" class="btn-p2 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">45</button>
+                <button onclick="handleAnswer(2, 2)" id="p2Opt2" class="btn-p2 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">63</button>
+                <button onclick="handleAnswer(2, 3)" id="p2Opt3" class="btn-p2 h-11 sm:h-13 md:h-15 rounded-xl font-bungee text-xl sm:text-2xl text-white flex items-center justify-center border-t border-white/20">36</button>
+            </div>
+
+            <!-- Incorrect / Frozen Stun Overlay -->
+            <div id="p2StunOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center rounded-2xl">
+                <span id="p2StunIcon" class="text-3xl animate-bounce">⚡</span>
+                <span id="p2StunMsg" class="font-bungee text-cyan-400 text-xs mt-1">SALAH! TERKUNCI 0.8s</span>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- SETUP / LEVEL / CHARACTER & CUSTOM TIMER MODAL -->
+    <div id="setupModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-3 md:p-4">
+        <div class="bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-4 md:p-5 max-w-xl w-full shadow-2xl relative max-h-[95vh] overflow-y-auto">
+            
+            <h2 class="font-bungee text-xl md:text-2xl text-amber-400 text-center mb-3 flex items-center justify-center gap-2">
+                ⚙️ PENGATURAN ARENA BERTARUNG
+            </h2>
+
+            <!-- 1. MODE PERMAINAN -->
+            <div class="mb-3">
+                <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider mb-1.5">1. PILIH MODE GAME:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="selectGameMode('vs')" id="modeVsBtn" class="p-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 font-bold text-xs text-amber-300 text-center">
+                        ⚔️ VERSUS 1v1 (ADU VS)
+                    </button>
+                    <button onclick="selectGameMode('boss')" id="modeBossBtn" class="p-2 rounded-xl border-2 border-slate-700 bg-slate-800 font-bold text-xs text-slate-300 text-center hover:border-slate-500">
+                        🐉 CO-OP (LAWAN RAJA MONSTER)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. PILIHAN KARAKTER (P1 & P2) -->
+            <div class="mb-3">
+                <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider mb-1.5">2. PILIHAN KARAKTER HERO:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <!-- P1 Character Dropdown -->
+                    <div class="bg-slate-950 p-2 rounded-xl border border-red-500/40">
+                        <span class="text-[10px] font-bungee text-red-400 block mb-1">PEMAIN 1:</span>
+                        <select id="p1CharSelect" onchange="updateCharacterChoice(1, this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs font-bold text-white">
+                            <option value="knight">🗡️ Ksatria Api </option>
+                            <option value="wizard">🔮 Alkemis Es </option>
+                            <option value="ninja">🥷 Ninja Bayangan </option>
+                            <option value="robot">⚡ Robot Petir </option>
+                        </select>
+                    </div>
+                    <!-- P2 Character Dropdown -->
+                    <div class="bg-slate-950 p-2 rounded-xl border border-cyan-500/40">
+                        <span class="text-[10px] font-bungee text-cyan-400 block mb-1">PEMAIN 2:</span>
+                        <select id="p2CharSelect" onchange="updateCharacterChoice(2, this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs font-bold text-white">
+                            <option value="wizard" selected>🔮 Alkemis Es </option>
+                            <option value="knight">🗡️️ Ksatria Api </option>
+                            <option value="ninja">🥷 Ninja Bayangan </option>
+                            <option value="robot">⚡ Robot Petir </option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. OPERASI MATEMATIKA SELECTOR -->
+            <div class="mb-3">
+                <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider mb-1.5">3. OPERASI MATEMATIKA:</label>
+                <div class="grid grid-cols-5 gap-1.5">
+                    <button onclick="selectOperation('add')" id="opBtn_add" class="py-1.5 px-1 rounded-xl border-2 border-slate-700 bg-slate-800 text-center font-bold text-xs text-slate-300">➕ Tambah</button>
+                    <button onclick="selectOperation('sub')" id="opBtn_sub" class="py-1.5 px-1 rounded-xl border-2 border-slate-700 bg-slate-800 text-center font-bold text-xs text-slate-300">➖ Kurang</button>
+                    <button onclick="selectOperation('mul')" id="opBtn_mul" class="py-1.5 px-1 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-center font-bold text-xs text-amber-300">✖️ Kali</button>
+                    <button onclick="selectOperation('div')" id="opBtn_div" class="py-1.5 px-1 rounded-xl border-2 border-slate-700 bg-slate-800 text-center font-bold text-xs text-slate-300">➗ Bagi</button>
+                    <button onclick="selectOperation('mix')" id="opBtn_mix" class="py-1.5 px-1 rounded-xl border-2 border-slate-700 bg-slate-800 text-center font-bold text-xs text-slate-300">🎲 Campur</button>
+                </div>
+            </div>
+
+            <!-- 4. LEVEL KESULITAN SELECTOR -->
+            <div class="mb-3">
+                <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider mb-1.5">4. LEVEL KESULITAN:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="selectLevel(1)" id="lvlBtn1" class="p-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-left font-bold text-xs text-amber-300">
+                        <div>🌟 Level 1: Satuan (1-9)</div>
+                    </button>
+                    <button onclick="selectLevel(2)" id="lvlBtn2" class="p-2 rounded-xl border-2 border-slate-700 bg-slate-800 text-left font-bold text-xs text-slate-300">
+                        <div>🔥 Level 2: Belasan (10-20)</div>
+                    </button>
+                    <button onclick="selectLevel(3)" id="lvlBtn3" class="p-2 rounded-xl border-2 border-slate-700 bg-slate-800 text-left font-bold text-xs text-slate-300">
+                        <div>💀 Level 3: 2 Angka (11-50)</div>
+                    </button>
+                    <button onclick="selectLevel(4)" id="lvlBtn4" class="p-2 rounded-xl border-2 border-slate-700 bg-slate-800 text-left font-bold text-xs text-slate-300">
+                        <div>🏆 Level 4: Variasi Acak</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5. PENGATURAN WAKTU BEBAS -->
+            <div class="mb-4 bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-bold text-amber-300 uppercase tracking-wider">5. DUKUNGAN WAKTU BERTARUNG:</label>
+                    <span id="customTimeDisplay" class="font-bungee text-sm text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/40">
+                        01:00 (60s)
+                    </span>
+                </div>
+                <input type="range" id="timeSlider" min="10" max="600" step="10" value="60" oninput="updateTimeSlider(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                <div class="grid grid-cols-6 gap-1 mt-2">
+                    <button onclick="setQuickTime(30)" class="py-1 rounded bg-slate-800 text-slate-300 font-bold text-[10px] border border-slate-700">30s</button>
+                    <button onclick="setQuickTime(60)" class="py-1 rounded bg-slate-800 text-slate-300 font-bold text-[10px] border border-slate-700">60s</button>
+                    <button onclick="setQuickTime(90)" class="py-1 rounded bg-slate-800 text-slate-300 font-bold text-[10px] border border-slate-700">90s</button>
+                    <button onclick="setQuickTime(120)" class="py-1 rounded bg-slate-800 text-slate-300 font-bold text-[10px] border border-slate-700">2 Mins</button>
+                    <button onclick="setQuickTime(180)" class="py-1 rounded bg-slate-800 text-slate-300 font-bold text-[10px] border border-slate-700">3 Mins</button>
+                    <button onclick="setQuickTime(300)" class="py-1 rounded bg-slate-800 text-slate-300 font-bold text-[10px] border border-slate-700">5 Mins</button>
+                </div>
+            </div>
+
+            <!-- Start Button & Return to Main Menu -->
+            <div class="space-y-2">
+                <button onclick="startNewGame()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 font-bungee text-base md:text-lg text-slate-950 shadow-lg hover:brightness-110 transition active:scale-95">
+                    MULAI PERTANDINGAN! 🚀
+                </button>
+                <a href="../index.html" class="block w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs md:text-sm text-center border border-slate-700 transition">
+                    ← Kembali ke Menu Utama
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- VICTORY / GAME OVER & DIAGNOSTIC REPORT MODAL -->
+    <div id="victoryModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-3 md:p-4">
+        <div class="bg-slate-900 border-2 border-amber-500 rounded-3xl p-4 md:p-6 max-w-lg w-full text-center shadow-2xl relative max-h-[92vh] overflow-y-auto">
+            
+            <div id="wreathIcon" class="text-5xl mb-1 animate-bounce">🏆</div>
+            <h2 id="winnerText" class="font-bungee text-2xl sm:text-3xl bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mb-1">
+                PEMAIN 1 MENANG!
+            </h2>
+            <p id="winnerSubtext" class="text-xs text-slate-400 font-bold mb-4">JUARA MATH DUELS ARENA</p>
+
+            <!-- Final Battle Statistics -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-950 p-2.5 rounded-2xl border border-slate-800 mb-3 text-left">
+                <div class="border-r border-slate-800 pr-2">
+                    <div class="text-xs font-bungee text-red-400 mb-1">PEMAIN 1</div>
+                    <div class="text-[11px] text-slate-300">Benar: <b id="p1StatCorrect" class="text-amber-400">0</b></div>
+                    <div class="text-[11px] text-slate-300">Akurasi: <b id="p1StatAcc" class="text-amber-400">100%</b></div>
+                    <div class="text-[11px] text-slate-300">Max Kombo: <b id="p1StatCombo" class="text-amber-400">0x</b></div>
+                </div>
+                <div class="pl-2">
+                    <div class="text-xs font-bungee text-cyan-400 mb-1">PEMAIN 2</div>
+                    <div class="text-[11px] text-slate-300">Benar: <b id="p2StatCorrect" class="text-amber-400">0</b></div>
+                    <div class="text-[11px] text-slate-300">Akurasi: <b id="p2StatAcc" class="text-amber-400">100%</b></div>
+                    <div class="text-[11px] text-slate-300">Max Kombo: <b id="p2StatCombo" class="text-amber-400">0x</b></div>
+                </div>
+            </div>
+
+            <!-- DIAGNOSTIC EVALUATION REPORT: MISSED QUESTIONS -->
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 mb-4 text-left">
+                <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    📋 LAPORAN EVALUASI (SOAL YANG PERLU DILATIH):
+                </div>
+                <div id="missedQuestionsList" class="text-[11px] text-slate-300 max-h-28 overflow-y-auto space-y-1 p-1">
+                    <div class="text-emerald-400 font-bold">✨ MasyaAllah hebat! Semua soal dijawab dengan sempurna!</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2">
+                <button onclick="startNewGame()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 font-bungee text-base text-slate-950 shadow hover:brightness-110 transition">
+                    TANDING ULANG 🔄
+                </button>
+                <button onclick="openSetupModal()" class="w-full py-2 rounded-xl bg-slate-800 border border-slate-700 font-bold text-xs text-slate-300 hover:bg-slate-700 transition">
+                    GANTI LEVEL & MODE ⚙️
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WEB AUDIO API SYNTHESIZER
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'swordLaunch') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'meteorLaunch') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(350, now + 0.22);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.22);
+            } else if (type === 'explosion') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(35, now + 0.28);
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.28);
+            } else if (type === 'wrong') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(130, now);
+                osc.frequency.setValueAtTime(85, now + 0.1);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'powerup') {
+                const notes = [300, 450, 600];
+                notes.forEach((f, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = f;
+                    gain.gain.setValueAtTime(0.2, now + i * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.06 + 0.15);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + i * 0.06);
+                    osc.stop(now + i * 0.06 + 0.15);
+                });
+            } else if (type === 'victory') {
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.35);
+                });
+            }
+        }
+
+        function toggleSound() {
+            isMuted = !isMuted;
+            document.getElementById('soundToggleBtn').innerHTML = isMuted ? '🔇 <span class="hidden md:inline">Mute</span>' : '🔊 <span class="hidden md:inline">Suara</span>';
+        }
+
+        // SVG CHARACTERS GRAPHICS GENERATOR
+        const characterSVGs = {
+            knight: `<svg class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 drop-shadow-[0_10px_20px_rgba(239,68,68,0.4)]" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="#ef4444" opacity="0.2"/>
+                <path d="M 25 50 Q 25 80 60 100 Q 95 80 95 50 L 95 30 L 60 20 L 25 30 Z" fill="#b91c1c" stroke="#fca5a5" stroke-width="4"/>
+                <path d="M 60 30 L 75 55 L 60 85 L 45 55 Z" fill="#f59e0b"/>
+                <rect x="38" y="40" width="44" height="20" rx="6" fill="#0f172a"/>
+                <rect x="43" y="47" width="34" height="6" rx="2" fill="#ef4444"/>
+            </svg>`,
+            wizard: `<svg class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 drop-shadow-[0_10px_20px_rgba(6,182,212,0.4)]" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="#06b6d4" opacity="0.2"/>
+                <path d="M 60 8 L 92 65 L 28 65 Z" fill="#0369a1"/>
+                <path d="M 18 65 C 18 60, 102 60, 102 65 C 102 70, 18 70, 18 65 Z" fill="#0284c7"/>
+                <polygon points="60,24 63,32 71,32 64,37 67,45 60,40 53,45 56,37 49,32 57,32" fill="#facc15"/>
+                <circle cx="60" cy="76" r="18" fill="#fde047"/>
+                <path d="M 44 76 Q 60 106 76 76 Z" fill="#f8fafc"/>
+                <circle cx="53" cy="73" r="3" fill="#38bdf8"/>
+                <circle cx="67" cy="73" r="3" fill="#38bdf8"/>
+            </svg>`,
+            ninja: `<svg class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 drop-shadow-[0_10px_20px_rgba(168,85,247,0.4)]" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="#a855f7" opacity="0.2"/>
+                <circle cx="60" cy="60" r="42" fill="#1e1b4b"/>
+                <rect x="25" y="45" width="70" height="24" rx="8" fill="#3b0764"/>
+                <ellipse cx="48" cy="57" rx="6" ry="4" fill="#a855f7"/>
+                <ellipse cx="72" cy="57" rx="6" ry="4" fill="#a855f7"/>
+                <path d="M 10 30 Q 60 10 110 30" stroke="#ef4444" stroke-width="6" fill="none"/>
+            </svg>`,
+            robot: `<svg class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 drop-shadow-[0_10px_20px_rgba(234,179,8,0.4)]" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="#eab308" opacity="0.2"/>
+                <rect x="25" y="25" width="70" height="70" rx="16" fill="#334155" stroke="#facc15" stroke-width="4"/>
+                <rect x="38" y="42" width="44" height="22" rx="6" fill="#0f172a"/>
+                <circle cx="48" cy="53" r="6" fill="#22c55e"/>
+                <circle cx="72" cy="53" r="6" fill="#22c55e"/>
+                <line x1="60" y1="25" x2="60" y2="10" stroke="#facc15" stroke-width="4"/>
+                <circle cx="60" cy="8" r="6" fill="#ef4444"/>
+            </svg>`
+        };
+
+        // 60FPS CANVAS PROJECTILE & PARTICLE ENGINE
+        const canvas = document.getElementById('fxCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let projectiles = [];
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        class Projectile {
+            constructor(startX, startY, targetX, targetY, type, attackerId, damage, isCritical) {
+                this.x = startX;
+                this.y = startY;
+                this.startX = startX;
+                this.startY = startY;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.type = type; // 'knight', 'wizard', 'ninja', 'robot'
+                this.attackerId = attackerId;
+                this.damage = damage;
+                this.isCritical = isCritical;
+                
+                this.progress = 0;
+                this.speed = isCritical ? 0.042 : 0.028;
+                this.angle = Math.atan2(targetY - startY, targetX - startX);
+                
+                const colors = {
+                    knight: '#ef4444',
+                    wizard: '#06b6d4',
+                    ninja: '#a855f7',
+                    robot: '#eab308'
+                };
+                this.color = colors[type] || '#ef4444';
+            }
+
+            update() {
+                this.progress += this.speed;
+                this.x = this.startX + (this.targetX - this.startX) * this.progress;
+                this.y = this.startY + (this.targetY - this.startY) * this.progress;
+
+                // Spawn Trail
+                for (let i = 0; i < (this.isCritical ? 3 : 2); i++) {
+                    particles.push(new Particle(
+                        this.x + (Math.random() - 0.5) * 10,
+                        this.y + (Math.random() - 0.5) * 10,
+                        this.color, '#ffffff', 'trail'
+                    ));
+                }
+
+                if (this.progress >= 1) {
+                    this.onHit();
+                    return false;
+                }
+                return true;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.type === 'ninja') { // Shuriken
+                    ctx.rotate(this.progress * 25);
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    for (let i = 0; i < 4; i++) {
+                        ctx.lineTo(Math.cos(i * Math.PI / 2) * 16, Math.sin(i * Math.PI / 2) * 16);
+                        ctx.lineTo(Math.cos(i * Math.PI / 2 + Math.PI / 4) * 6, Math.sin(i * Math.PI / 2 + Math.PI / 4) * 6);
+                    }
+                    ctx.fill();
+                } else if (this.type === 'robot') { // Laser Beam
+                    ctx.rotate(this.angle);
+                    ctx.fillStyle = '#facc15';
+                    ctx.shadowColor = '#eab308';
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(-20, -4, 40, 8);
+                } else { // Meteor / Ice Shard
+                    const radius = this.isCritical ? 22 : 15;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowColor = this.color;
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            onHit() {
+                playSound('explosion');
+
+                const arena = document.getElementById('battleArena');
+                arena.classList.add('animate-impact-shake');
+                setTimeout(() => arena.classList.remove('animate-impact-shake'), 400);
+
+                for (let i = 0; i < (this.isCritical ? 35 : 20); i++) {
+                    particles.push(new Particle(this.targetX, this.targetY, this.color, '#ffffff', 'explosion'));
+                }
+
+                // Check Defender Shield
+                const defenderId = this.attackerId === 1 ? 2 : 1;
+                
+                if (gameMode === 'vs') {
+                    if (players[defenderId].hasShield) {
+                        players[defenderId].hasShield = false;
+                        document.getElementById(`p${defenderId}ShieldIcon`).classList.add('hidden');
+                        spawnFloatingDamage(defenderId, 0, false, "PARRIED! 🛡️️");
+                        return;
+                    }
+
+                    players[defenderId].hp = Math.max(0, players[defenderId].hp - this.damage);
+                    spawnFloatingDamage(defenderId, this.damage, this.isCritical);
+                    updateHpBars();
+
+                    if (players[defenderId].hp <= 0) {
+                        players[this.attackerId].score++;
+                        updateScoreText();
+                        players[defenderId].hp = 100;
+                        updateHpBars();
+                    }
+                } else { // Boss Raid Mode
+                    bossHp = Math.max(0, bossHp - this.damage);
+                    spawnFloatingDamage('Boss', this.damage, this.isCritical);
+                    updateBossHpBar();
+
+                    if (bossHp <= 0) {
+                        endGame(1); // Victory Co-op
+                    }
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color1, color2, mode) {
+                this.x = x;
+                this.y = y;
+                this.color = Math.random() > 0.5 ? color1 : color2;
+                this.mode = mode;
+
+                if (mode === 'explosion') {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 7 + 2;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.radius = Math.random() * 5 + 2;
+                    this.life = 1.0;
+                    this.decay = Math.random() * 0.04 + 0.02;
+                } else {
+                    this.vx = (Math.random() - 0.5) * 2;
+                    this.vy = (Math.random() - 0.5) * 2;
+                    this.radius = Math.random() * 4 + 1;
+                    this.life = 1.0;
+                    this.decay = Math.random() * 0.08 + 0.04;
+                }
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                return this.life > 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function animateFX() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            projectiles = projectiles.filter(p => p.update());
+            projectiles.forEach(p => p.draw());
+
+            particles = particles.filter(p => p.update());
+            particles.forEach(p => p.draw());
+
+            requestAnimationFrame(animateFX);
+        }
+
+        // GAME STATE & CONFIGURATION
+        let gameMode = 'vs'; // 'vs' or 'boss'
+        let selectedOperation = 'mul';
+        let selectedLevel = 1;
+        let durationSeconds = 60;
+        let timerInterval = null;
+        let timeRemaining = 60;
+        let isGameActive = false;
+
+        let bossHp = 300;
+
+        let players = {
+            1: { character: 'knight', hp: 100, score: 0, streak: 0, maxStreak: 0, correct: 0, total: 0, ultCharge: 0, hasShield: false, doubleDmg: false, question: null, isStunned: false, missedQuestions: [] },
+            2: { character: 'wizard', hp: 100, score: 0, streak: 0, maxStreak: 0, correct: 0, total: 0, ultCharge: 0, hasShield: false, doubleDmg: false, question: null, isStunned: false, missedQuestions: [] }
+        };
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function formatTimeMMSS(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+        }
+
+        function generateQuestion(opType, level) {
+            let num1, num2, answer, symbol;
+
+            let activeOp = opType === 'mix' ? ['add', 'sub', 'mul', 'div'][getRandomInt(0, 3)] : opType;
+            let activeLvl = level === 4 ? getRandomInt(1, 3) : level;
+
+            if (activeOp === 'add') {
+                symbol = '+';
+                if (activeLvl === 1) { num1 = getRandomInt(1, 9); num2 = getRandomInt(1, 9); }
+                else if (activeLvl === 2) { num1 = getRandomInt(10, 25); num2 = getRandomInt(5, 20); }
+                else { num1 = getRandomInt(20, 99); num2 = getRandomInt(15, 85); }
+                answer = num1 + num2;
+            } else if (activeOp === 'sub') {
+                symbol = '-';
+                if (activeLvl === 1) { num1 = getRandomInt(2, 10); num2 = getRandomInt(1, num1); }
+                else if (activeLvl === 2) { num1 = getRandomInt(15, 30); num2 = getRandomInt(5, num1); }
+                else { num1 = getRandomInt(30, 100); num2 = getRandomInt(10, num1); }
+                answer = num1 - num2;
+            } else if (activeOp === 'div') {
+                symbol = '÷';
+                let divisor, quotient;
+                if (activeLvl === 1) { divisor = getRandomInt(1, 9); quotient = getRandomInt(1, 9); }
+                else if (activeLvl === 2) { divisor = getRandomInt(2, 10); quotient = getRandomInt(5, 12); }
+                else { divisor = getRandomInt(3, 15); quotient = getRandomInt(8, 20); }
+                num1 = divisor * quotient;
+                num2 = divisor;
+                answer = quotient;
+            } else {
+                symbol = '×';
+                if (activeLvl === 1) { num1 = getRandomInt(1, 9); num2 = getRandomInt(1, 9); }
+                else if (activeLvl === 2) { num1 = getRandomInt(10, 12); num2 = getRandomInt(1, 10); }
+                else { num1 = getRandomInt(11, 25); num2 = getRandomInt(2, 15); }
+                answer = num1 * num2;
+            }
+
+            let options = new Set();
+            options.add(answer);
+            while (options.size < 4) {
+                let delta = getRandomInt(-10, 10);
+                if (delta === 0) delta = 2;
+                let wrongOpt = answer + delta;
+                if (wrongOpt >= 0 && wrongOpt !== answer) options.add(wrongOpt);
+            }
+
+            return { num1, num2, symbol, answer, options: Array.from(options).sort(() => Math.random() - 0.5) };
+        }
+
+        // UI Handlers & Setup
+        function selectGameMode(mode) {
+            gameMode = mode;
+            document.getElementById('modeVsBtn').className = mode === 'vs' ? "p-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 font-bold text-xs text-amber-300 text-center" : "p-2 rounded-xl border-2 border-slate-700 bg-slate-800 font-bold text-xs text-slate-300 text-center";
+            document.getElementById('modeBossBtn').className = mode === 'boss' ? "p-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 font-bold text-xs text-amber-300 text-center" : "p-2 rounded-xl border-2 border-slate-700 bg-slate-800 font-bold text-xs text-slate-300 text-center";
+        }
+
+        function updateCharacterChoice(pId, charKey) {
+            players[pId].character = charKey;
+            document.getElementById(`p${pId}AvatarSvgContainer`).innerHTML = characterSVGs[charKey];
+        }
+
+        function selectOperation(op) {
+            selectedOperation = op;
+            ['add', 'sub', 'mul', 'div', 'mix'].forEach(item => {
+                document.getElementById(`opBtn_${item}`).className = item === op ? "py-1.5 px-1 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-center font-bold text-xs text-amber-300" : "py-1.5 px-1 rounded-xl border-2 border-slate-700 bg-slate-800 text-center font-bold text-xs text-slate-300";
+            });
+        }
+
+        function selectLevel(lvl) {
+            selectedLevel = lvl;
+            [1, 2, 3, 4].forEach(i => {
+                document.getElementById(`lvlBtn${i}`).className = i === lvl ? "p-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-left font-bold text-xs text-amber-300" : "p-2 rounded-xl border-2 border-slate-700 bg-slate-800 text-left font-bold text-xs text-slate-300";
+            });
+        }
+
+        function updateTimeSlider(val) {
+            durationSeconds = parseInt(val);
+            document.getElementById('customTimeDisplay').innerText = `${formatTimeMMSS(durationSeconds)} (${durationSeconds}s)`;
+        }
+
+        function setQuickTime(sec) {
+            document.getElementById('timeSlider').value = sec;
+            updateTimeSlider(sec);
+        }
+
+        function openSetupModal() {
+            clearInterval(timerInterval);
+            isGameActive = false;
+            document.getElementById('victoryModal').classList.add('hidden');
+            document.getElementById('setupModal').classList.remove('hidden');
+        }
+
+        function startNewGame() {
+            initAudio();
+            resizeCanvas();
+
+            document.getElementById('setupModal').classList.add('hidden');
+            document.getElementById('victoryModal').classList.add('hidden');
+
+            bossHp = 300;
+
+            [1, 2].forEach(id => {
+                players[id].hp = 100;
+                players[id].score = 0;
+                players[id].streak = 0;
+                players[id].maxStreak = 0;
+                players[id].correct = 0;
+                players[id].total = 0;
+                players[id].ultCharge = 0;
+                players[id].hasShield = false;
+                players[id].doubleDmg = false;
+                players[id].missedQuestions = [];
+                players[id].isStunned = false;
+
+                updateUltBar(id);
+                document.getElementById(`p${id}ShieldIcon`).classList.add('hidden');
+                document.getElementById(`p${id}PowerUpBadge`).classList.add('hidden');
+            });
+
+            // Adjust Arena Layout for Mode
+            if (gameMode === 'boss') {
+                document.getElementById('vsEmblem').classList.add('hidden');
+                document.getElementById('bossHeroBox').classList.remove('hidden');
+                document.getElementById('bossHeroBox').classList.add('flex');
+                document.getElementById('scoreBoardBox').classList.add('hidden');
+                document.getElementById('hdrGameModeText').innerText = "CO-OP BOSS RAID";
+                updateBossHpBar();
+            } else {
+                document.getElementById('vsEmblem').classList.remove('hidden');
+                document.getElementById('bossHeroBox').classList.add('hidden');
+                document.getElementById('scoreBoardBox').classList.remove('hidden');
+                document.getElementById('hdrGameModeText').innerText = "1v1 VERSUS";
+            }
+
+            updateCharacterChoice(1, players[1].character);
+            updateCharacterChoice(2, players[2].character);
+
+            updateHpBars();
+            updateScoreText();
+
+            loadQuestionForPlayer(1);
+            loadQuestionForPlayer(2);
+
+            isGameActive = true;
+
+            // Timer Engine
+            clearInterval(timerInterval);
+            timeRemaining = durationSeconds;
+            document.getElementById('timerDisplay').innerText = formatTimeMMSS(timeRemaining);
+
+            timerInterval = setInterval(() => {
+                if (!isGameActive) return;
+                timeRemaining--;
+                document.getElementById('timerDisplay').innerText = formatTimeMMSS(timeRemaining);
+
+                if (timeRemaining <= 0) endGameByTimeout();
+            }, 1000);
+        }
+
+        function loadQuestionForPlayer(pId) {
+            const q = generateQuestion(selectedOperation, selectedLevel);
+            players[pId].question = q;
+
+            document.getElementById(`p${pId}QuestionText`).innerText = `${q.num1} ${q.symbol} ${q.num2} = ?`;
+
+            q.options.forEach((optVal, idx) => {
+                document.getElementById(`p${pId}Opt${idx}`).innerText = optVal;
+            });
+        }
+
+        function handleAnswer(pId, optionIndex) {
+            if (!isGameActive) return;
+            const p = players[pId];
+            if (p.isStunned) return;
+
+            const selectedAns = p.question.options[optionIndex];
+            p.total++;
+
+            const defenderId = pId === 1 ? 2 : 1;
+
+            if (selectedAns === p.question.answer) {
+                p.correct++;
+                p.streak++;
+                if (p.streak > p.maxStreak) p.maxStreak = p.streak;
+
+                p.ultCharge = Math.min(100, p.ultCharge + 25);
+                updateUltBar(pId);
+
+                // Calculate Damage & Power-Ups
+                let damage = p.streak >= 3 ? 30 : 15;
+                if (p.doubleDmg) {
+                    damage *= 2;
+                    p.doubleDmg = false;
+                    document.getElementById(`p${pId}PowerUpBadge`).classList.add('hidden');
+                }
+
+                // Random Power-Up Drop Chance
+                if (Math.random() < 0.25) {
+                    triggerRandomPowerUp(pId, defenderId);
+                }
+
+                launchAttackProjectile(pId, gameMode === 'boss' ? 'Boss' : defenderId, damage, p.streak >= 3);
+                loadQuestionForPlayer(pId);
+
+            } else {
+                // Record Missed Question for Diagnostics
+                p.missedQuestions.push(`${p.question.num1} ${p.question.symbol} ${p.question.num2} = ${p.question.answer}`);
+
+                p.streak = 0;
+                document.getElementById(`p${pId}ComboBadge`).classList.add('hidden');
+
+                playSound('wrong');
+
+                p.isStunned = true;
+                const overlay = document.getElementById(`p${pId}StunOverlay`);
+                document.getElementById(`p${pId}StunMsg`).innerText = "SALAH! TERKUNCI 0.8s";
+                document.getElementById(`p${pId}StunIcon`).innerText = "💥";
+                overlay.classList.remove('hidden');
+
+                setTimeout(() => {
+                    p.isStunned = false;
+                    overlay.classList.add('hidden');
+                }, 800);
+
+                loadQuestionForPlayer(pId);
+            }
+        }
+
+        function triggerRandomPowerUp(pId, defenderId) {
+            const types = ['shield', 'double', 'stun'];
+            const chosen = types[getRandomInt(0, 2)];
+            playSound('powerup');
+
+            if (chosen === 'shield') {
+                players[pId].hasShield = true;
+                document.getElementById(`p${pId}ShieldIcon`).classList.remove('hidden');
+            } else if (chosen === 'double') {
+                players[pId].doubleDmg = true;
+                document.getElementById(`p${pId}PowerUpBadge`).classList.remove('hidden');
+            } else if (chosen === 'stun' && gameMode === 'vs') {
+                players[defenderId].isStunned = true;
+                const overlay = document.getElementById(`p${defenderId}StunOverlay`);
+                document.getElementById(`p${defenderId}StunMsg`).innerText = "DIBEKUKAN ITEM! 2.0s";
+                document.getElementById(`p${defenderId}StunIcon`).innerText = "🧊";
+                overlay.classList.remove('hidden');
+
+                setTimeout(() => {
+                    players[defenderId].isStunned = false;
+                    overlay.classList.add('hidden');
+                }, 2000);
+            }
+        }
+
+        function triggerUltimate(pId) {
+            if (players[pId].ultCharge < 100) return;
+            players[pId].ultCharge = 0;
+            updateUltBar(pId);
+
+            const defenderTarget = gameMode === 'boss' ? 'Boss' : (pId === 1 ? 2 : 1);
+
+            // Barrage 4 projectiles rapidly
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    launchAttackProjectile(pId, defenderTarget, 20, true);
+                }, i * 180);
+            }
+        }
+
+        function updateUltBar(pId) {
+            const val = players[pId].ultCharge;
+            document.getElementById(`p${pId}UltBar`).style.width = `${val}%`;
+            const ultBtn = document.getElementById(`p${pId}UltBtn`);
+
+            if (val >= 100) {
+                ultBtn.disabled = false;
+                ultBtn.classList.add('ult-btn-active');
+            } else {
+                ultBtn.disabled = true;
+                ultBtn.classList.remove('ult-btn-active');
+            }
+        }
+
+        function launchAttackProjectile(attackerId, defenderTarget, damage, isCritical) {
+            const attackerAvatar = document.getElementById(`p${attackerId}Avatar`);
+            const defenderAvatar = defenderTarget === 'Boss' ? document.getElementById('bossHeroBox') : document.getElementById(`p${defenderTarget}Avatar`);
+
+            const attRect = attackerAvatar.getBoundingClientRect();
+            const defRect = defenderAvatar.getBoundingClientRect();
+            const arenaRect = canvas.getBoundingClientRect();
+
+            const startX = attRect.left + attRect.width / 2 - arenaRect.left;
+            const startY = attRect.top + attRect.height / 2 - arenaRect.top;
+            const targetX = defRect.left + defRect.width / 2 - arenaRect.left;
+            const targetY = defRect.top + defRect.height / 2 - arenaRect.top;
+
+            projectiles.push(new Projectile(
+                startX, startY, targetX, targetY,
+                players[attackerId].character, attackerId, damage, isCritical
+            ));
+        }
+
+        function spawnFloatingDamage(targetId, damage, isCritical, customTxt) {
+            const targetAvatar = targetId === 'Boss' ? document.getElementById('bossHeroBox') : document.getElementById(`p${targetId}Avatar`);
+            const rect = targetAvatar.getBoundingClientRect();
+
+            const damageEl = document.createElement('div');
+            damageEl.className = 'floating-damage-txt text-xl sm:text-2xl md:text-3xl font-bungee';
+            damageEl.style.left = `${rect.left + rect.width / 2 - 25}px`;
+            damageEl.style.top = `${rect.top}px`;
+
+            if (customTxt) {
+                damageEl.innerText = customTxt;
+                damageEl.style.color = '#38bdf8';
+            } else if (isCritical) {
+                damageEl.innerText = `CRITICAL -${damage}!⚡`;
+                damageEl.style.color = '#facc15';
+            } else {
+                damageEl.innerText = `-${damage}`;
+                damageEl.style.color = '#ef4444';
+            }
+
+            document.body.appendChild(damageEl);
+            setTimeout(() => damageEl.remove(), 950);
+        }
+
+        function updateHpBars() {
+            [1, 2].forEach(id => {
+                const hp = players[id].hp;
+                document.getElementById(`p${id}HpBar`).style.width = `${hp}%`;
+                document.getElementById(`p${id}HpText`).innerText = `${hp} / 100 HP`;
+            });
+        }
+
+        function updateBossHpBar() {
+            document.getElementById('bossHpBar').style.width = `${(bossHp / 300) * 100}%`;
+            document.getElementById('bossHpText').innerText = `RAJA MONSTER: ${bossHp} / 300 HP`;
+        }
+
+        function updateScoreText() {
+            document.getElementById('p1ScoreText').innerText = players[1].score;
+            document.getElementById('p2ScoreText').innerText = players[2].score;
+        }
+
+        function endGame(winnerId) {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            playSound('victory');
+
+            const victoryModal = document.getElementById('victoryModal');
+            const winnerText = document.getElementById('winnerText');
+
+            if (gameMode === 'boss') {
+                if (bossHp <= 0) {
+                    winnerText.innerText = "TIM BERHASIL MENGALAHKAN MONSTER!";
+                    winnerText.className = "font-bungee text-xl sm:text-2xl text-emerald-400 mb-1";
+                } else {
+                    winnerText.innerText = "WAKTU HABIS! MONSTER MENANG!";
+                    winnerText.className = "font-bungee text-xl sm:text-2xl text-red-500 mb-1";
+                }
+            } else {
+                if (winnerId === 1) {
+                    winnerText.innerText = "PEMAIN 1 MENANG!";
+                    winnerText.className = "font-bungee text-2xl sm:text-3xl text-red-400 mb-1";
+                } else if (winnerId === 2) {
+                    winnerText.innerText = "PEMAIN 2 MENANG!";
+                    winnerText.className = "font-bungee text-2xl sm:text-3xl text-cyan-400 mb-1";
+                } else {
+                    winnerText.innerText = "PERTANDINGAN SERI!";
+                    winnerText.className = "font-bungee text-2xl sm:text-3xl text-amber-400 mb-1";
+                }
+            }
+
+            // Stats and Diagnostic missed questions display
+            let missedHtml = "";
+            [1, 2].forEach(id => {
+                const p = players[id];
+                const acc = p.total > 0 ? Math.round((p.correct / p.total) * 100) : 0;
+                document.getElementById(`p${id}StatCorrect`).innerText = p.correct;
+                document.getElementById(`p${id}StatAcc`).innerText = `${acc}%`;
+                document.getElementById(`p${id}StatCombo`).innerText = `${p.maxStreak}x`;
+
+                if (p.missedQuestions.length > 0) {
+                    missedHtml += `<div class="font-bold text-red-400 mt-1">Pemain ${id}:</div>`;
+                    p.missedQuestions.forEach(q => {
+                        missedHtml += `<div class="ml-2 text-slate-400">• ${q}</div>`;
+                    });
+                }
+            });
+
+            const missedBox = document.getElementById('missedQuestionsList');
+            missedBox.innerHTML = missedHtml !== "" ? missedHtml : '<div class="text-emerald-400 font-bold">✨ MasyaAllah hebat! Semua soal dijawab dengan sempurna!</div>';
+
+            victoryModal.classList.remove('hidden');
+        }
+
+        function endGameByTimeout() {
+            if (gameMode === 'boss') {
+                endGame(bossHp <= 0 ? 1 : 0);
+            } else {
+                if (players[1].score > players[2].score) endGame(1);
+                else if (players[2].score > players[1].score) endGame(2);
+                else {
+                    if (players[1].hp > players[2].hp) endGame(1);
+                    else if (players[2].hp > players[1].hp) endGame(2);
+                    else endGame(0);
+                }
+            }
+        }
+
+        window.onload = function() {
+            resizeCanvas();
+            animateFX();
+            openSetupModal();
+        };
+    </script>
+</body>
+</html>

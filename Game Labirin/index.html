@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Maze 2.0 - Labirin Petualangan Matematika</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .neon-glow {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+        }
+        .neon-glow-pink {
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.4);
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        select option {
+            background: #1e293b;
+            color: white;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .gate-pulse {
+            animation: pulse-glow 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- LOBBY / MENU UTAMA -->
+    <div id="menu-screen" class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-md text-center neon-glow transition-all duration-300">
+        <!-- Tombol kembali ke menu utama portal di atas lobi -->
+        <div class="mb-4 text-left">
+            <a href="../index.html" class="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-400 hover:text-indigo-400 bg-slate-800/80 hover:bg-slate-800 px-3 py-1.5 rounded-xl transition">
+                <i class="fa-solid fa-arrow-left"></i> Menu Utama
+            </a>
+        </div>
+
+        <div class="mb-4 inline-block p-4 bg-indigo-600/30 rounded-2xl border border-indigo-500/30 text-indigo-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+            </svg>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-['Fredoka'] text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500 mb-2">Math Maze 2.0</h1>
+        <p class="text-slate-400 text-sm mb-6">Pandu Kucing Astronot melintasi labirin kosmik raksasa dan taklukkan gerbang matematika!</p>
+        
+        <!-- Pilihan Operasi Hitung -->
+        <div class="space-y-4 text-left mb-6">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Operasi Hitung:</label>
+                <select id="op-focus" class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                    <option value="+">➕ Penjumlahan (+)</option>
+                    <option value="-">➖ Pengurangan (-)</option>
+                    <option value="*">✖️ Perkalian (×)</option>
+                    <option value="/">➗ Pembagian (÷)</option>
+                    <option value="mixed">🌟 Mode Campuran (+, -, ×, ÷)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Tingkat Kesulitan:</label>
+                <select id="diff-level" class="w-full bg-slate-900 border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                    <option value="easy">🟢 Easy (Angka 1 - 10 | Grid 13x13)</option>
+                    <option value="medium" selected>🟡 Medium (Angka 1 - 25 | Grid 17x17)</option>
+                    <option value="hard">🟠 Hard (Angka 1 - 50 | Grid 21x21)</option>
+                    <option value="extreme">🔴 Extreme (Angka 1 - 100 | Nyawa Terbatas)</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-['Fredoka'] text-xl rounded-2xl shadow-lg shadow-indigo-600/30 transform transition active:scale-95 cursor-pointer">
+            MULAI PETUALANGAN 🚀
+        </button>
+    </div>
+
+    <!-- LAYAR PERMAINAN -->
+    <div id="game-screen" class="hidden flex-col items-center w-full max-w-2xl">
+        <!-- Header Info -->
+        <div class="glass-panel w-full flex items-center justify-between p-3 sm:p-4 rounded-2xl mb-4 shadow-xl">
+            <div class="flex items-center gap-2">
+                <button onclick="returnToMenu()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center gap-1 cursor-pointer">
+                    ⬅️ <span class="hidden sm:inline">Pengaturan</span>
+                </button>
+                <a href="../index.html" class="px-3 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center gap-1 border border-indigo-500/30 cursor-pointer">
+                    🏠 <span class="hidden sm:inline">Menu Utama</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-4 text-xs sm:text-sm font-extrabold">
+                <div class="text-indigo-400">Poin: <span id="score-val" class="text-white text-base">0</span></div>
+                <div class="text-pink-400">Level: <span id="level-val" class="text-white text-base">1</span></div>
+                <div id="lives-container" class="text-red-400 flex items-center gap-1">❤️ <span id="lives-val" class="text-white text-base">3</span></div>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="relative w-full flex justify-center mb-4">
+            <canvas id="mazeCanvas" class="rounded-2xl border-4 border-slate-700/80 shadow-2xl bg-slate-950 max-w-full h-auto"></canvas>
+        </div>
+
+        <!-- Kontrol Sentuh (Touch Pad untuk Mobile/Tablet) -->
+        <div class="grid grid-cols-3 gap-3 w-48 sm:w-56 mx-auto">
+            <div></div>
+            <button class="ctrl-btn bg-slate-800 hover:bg-indigo-600 active:bg-indigo-700 border-2 border-slate-700 h-14 rounded-2xl text-2xl flex items-center justify-center transition-colors shadow-lg cursor-pointer" onclick="handleMove(0, -1)">⬆️</button>
+            <div></div>
+            <button class="ctrl-btn bg-slate-800 hover:bg-indigo-600 active:bg-indigo-700 border-2 border-slate-700 h-14 rounded-2xl text-2xl flex items-center justify-center transition-colors shadow-lg cursor-pointer" onclick="handleMove(-1, 0)">⬅️</button>
+            <button class="ctrl-btn bg-slate-800 hover:bg-indigo-600 active:bg-indigo-700 border-2 border-slate-700 h-14 rounded-2xl text-2xl flex items-center justify-center transition-colors shadow-lg cursor-pointer" onclick="handleMove(0, 1)">⬇️</button>
+            <button class="ctrl-btn bg-slate-800 hover:bg-indigo-600 active:bg-indigo-700 border-2 border-slate-700 h-14 rounded-2xl text-2xl flex items-center justify-center transition-colors shadow-lg cursor-pointer" onclick="handleMove(1, 0)">➡️</button>
+        </div>
+    </div>
+
+    <!-- MODAL SOAL MATEMATIKA -->
+    <div id="quiz-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-md text-center neon-glow border border-indigo-500/40 transform scale-95 transition-transform duration-300" id="quiz-box-content">
+            <div class="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 font-bold text-xs rounded-full mb-3 uppercase tracking-wider">🔒 Gerbang Tantangan Matematika</div>
+            <div class="text-4xl sm:text-5xl font-extrabold font-['Fredoka'] text-white my-6 tracking-wider drop-shadow-md" id="q-text">12 + 8 = ?</div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4" id="q-options">
+                <!-- Pilihan Jawaban Dinamis -->
+            </div>
+            <div id="feedback-msg" class="text-sm font-bold h-6"></div>
+        </div>
+    </div>
+
+    <!-- MODAL NOTIFIKASI UMUM (Pengganti Alert) -->
+    <div id="alert-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-sm text-center neon-glow-pink border border-pink-500/40">
+            <div id="alert-icon" class="text-4xl mb-3">🎉</div>
+            <h3 id="alert-title" class="text-2xl font-extrabold font-['Fredoka'] text-white mb-2">Hebat!</h3>
+            <p id="alert-message" class="text-slate-300 text-sm mb-6">Kamu berhasil menyelesaikan tantangan ini.</p>
+            <button id="alert-btn" onclick="closeAlertModal()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-['Fredoka'] text-lg rounded-xl shadow-lg transition active:scale-95 cursor-pointer">
+                Lanjut 🚀
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let currentOp = '+';
+        let currentDiff = 'medium';
+        let score = 0;
+        let level = 1;
+        let lives = 3;
+        let gridSize = 17;
+        let tileSize = 24;
+        let map = [];
+        let player = { x: 1, y: 1, animFrame: 0 };
+        let pendingGate = null;
+        let activeAnswer = 0;
+        let alertCallback = null;
+
+        function showCustomAlert(title, message, icon = '🎉', callback = null) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('alert-icon').innerText = icon;
+            document.getElementById('alert-modal').style.display = 'flex';
+            alertCallback = callback;
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').style.display = 'none';
+            if (alertCallback) {
+                let cb = alertCallback;
+                alertCallback = null;
+                cb();
+            }
+        }
+
+        function startGame() {
+            currentOp = document.getElementById('op-focus').value;
+            currentDiff = document.getElementById('diff-level').value;
+
+            if (currentDiff === 'easy') {
+                gridSize = 13;
+                lives = 5;
+            } else if (currentDiff === 'medium') {
+                gridSize = 17;
+                lives = 3;
+            } else if (currentDiff === 'hard') {
+                gridSize = 21;
+                lives = 3;
+            } else if (currentDiff === 'extreme') {
+                gridSize = 25;
+                lives = 2;
+            }
+
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            
+            if (currentDiff === 'easy') {
+                document.getElementById('lives-container').style.display = 'none';
+            } else {
+                document.getElementById('lives-container').style.display = 'flex';
+            }
+
+            score = 0;
+            level = 1;
+            initNewLevel();
+        }
+
+        function returnToMenu() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('menu-screen').style.display = 'block';
+        }
+
+        function generateMaze(size) {
+            let m = Array(size).fill(0).map(() => Array(size).fill(1));
+
+            function isValid(r, c) {
+                return r > 0 && r < size - 1 && c > 0 && c < size - 1;
+            }
+
+            let stack = [];
+            let startR = 1, startC = 1;
+            m[startR][startC] = 0;
+            stack.push([startR, startC]);
+
+            while (stack.length > 0) {
+                let [currR, currC] = stack[stack.length - 1];
+                let neighbors = [];
+                let dirs = [[-2,0],[2,0],[0,-2],[0,2]];
+
+                for (let [dr, dc] of dirs) {
+                    let nr = currR + dr;
+                    let nc = currC + dc;
+                    if (isValid(nr, nc) && m[nr][nc] === 1) {
+                        neighbors.push({r: nr, c: nc, dr: dr, dc: dc});
+                    }
+                }
+
+                if (neighbors.length > 0) {
+                    let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    m[currR + next.dr / 2][currC + next.dc / 2] = 0;
+                    m[next.r][next.c] = 0;
+                    stack.push([next.r, next.c]);
+                } else {
+                    stack.pop();
+                }
+            }
+
+            m[size - 2][size - 2] = 0;
+            m[size - 2][size - 3] = 0;
+
+            let pathCells = [];
+            for (let r = 1; r < size - 1; r++) {
+                for (let c = 1; c < size - 1; c++) {
+                    if (m[r][c] === 0 && !(r === 1 && c === 1) && !(r === size - 2 && c === size - 2)) {
+                        pathCells.push({r, c});
+                    }
+                }
+            }
+
+            pathCells.sort(() => Math.random() - 0.5);
+            let gateCount = Math.floor(pathCells.length * 0.15) + 3;
+            for (let i = 0; i < Math.min(gateCount, pathCells.length); i++) {
+                m[pathCells[i].r][pathCells[i].c] = 2;
+            }
+
+            m[size - 2][size - 2] = 3;
+
+            return m;
+        }
+
+        function initNewLevel() {
+            map = generateMaze(gridSize);
+            player.x = 1;
+            player.y = 1;
+            
+            const maxCanvasSize = Math.min(window.innerWidth - 40, 420);
+            tileSize = Math.floor(maxCanvasSize / gridSize);
+            canvas.width = gridSize * tileSize;
+            canvas.height = gridSize * tileSize;
+
+            updateStats();
+            drawGame();
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    let tile = map[r][c];
+                    let x = c * tileSize;
+                    let y = r * tileSize;
+
+                    if (tile === 1) {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.strokeStyle = '#334155';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x, y, tileSize, tileSize);
+                    } else if (tile === 2) {
+                        ctx.fillStyle = '#090d16';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.fillStyle = '#ec4899';
+                        ctx.beginPath();
+                        ctx.roundRect(x + 3, y + 3, tileSize - 6, tileSize - 6, 6);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = `bold ${Math.floor(tileSize * 0.55)}px Fredoka`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('?', x + tileSize / 2, y + tileSize / 2);
+                    } else if (tile === 3) {
+                        ctx.fillStyle = '#22c55e';
+                        ctx.beginPath();
+                        ctx.roundRect(x + 2, y + 2, tileSize - 4, tileSize - 4, 6);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = `bold ${Math.floor(tileSize * 0.5)}px Fredoka`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🏁', x + tileSize / 2, y + tileSize / 2);
+                    } else {
+                        ctx.fillStyle = '#090d16';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                    }
+                }
+            }
+
+            let px = player.x * tileSize + tileSize / 2;
+            let py = player.y * tileSize + tileSize / 2;
+            let radius = tileSize * 0.4;
+
+            let gradient = ctx.createRadialGradient(px, py, 2, px, py, radius);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.8)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(px, py, radius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#818cf8';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.arc(px, py + 2, radius * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(px - radius * 0.6, py - radius * 0.3);
+            ctx.lineTo(px - radius * 0.9, py - radius * 0.9);
+            ctx.lineTo(px - radius * 0.2, py - radius * 0.6);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(px + radius * 0.6, py - radius * 0.3);
+            ctx.lineTo(px + radius * 0.9, py - radius * 0.9);
+            ctx.lineTo(px + radius * 0.2, py - radius * 0.6);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(px - radius * 0.25, py, radius * 0.15, 0, Math.PI * 2);
+            ctx.arc(px + radius * 0.25, py, radius * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(px - radius * 0.28, py - 2, radius * 0.05, 0, Math.PI * 2);
+            ctx.arc(px + radius * 0.22, py - 2, radius * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#f43f5e';
+            ctx.beginPath();
+            ctx.arc(px, py + radius * 0.25, radius * 0.08, 0, Math.PI);
+            ctx.fill();
+        }
+
+        window.addEventListener('keydown', e => {
+            if (document.getElementById('game-screen').style.display === 'flex' && document.getElementById('quiz-modal').style.display !== 'flex' && document.getElementById('alert-modal').style.display !== 'flex') {
+                if (e.key === 'ArrowUp' || e.key === 'w') handleMove(0, -1);
+                if (e.key === 'ArrowDown' || e.key === 's') handleMove(0, 1);
+                if (e.key === 'ArrowLeft' || e.key === 'a') handleMove(-1, 0);
+                if (e.key === 'ArrowRight' || e.key === 'd') handleMove(1, 0);
+            }
+        });
+
+        function handleMove(dx, dy) {
+            let nx = player.x + dx;
+            let ny = player.y + dy;
+
+            if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) return;
+            let target = map[ny][nx];
+
+            if (target === 1) return;
+
+            if (target === 2) {
+                pendingGate = { x: nx, y: ny };
+                triggerMathQuiz();
+                return;
+            }
+
+            if (target === 3) {
+                score += 100 * level;
+                level++;
+                showCustomAlert('🎉 LUAR BIASA!', `Kamu berhasil menaklukkan labirin level ${level - 1}! Bersiap ke level berikutnya.`, '🚀', () => {
+                    initNewLevel();
+                });
+                return;
+            }
+
+            player.x = nx;
+            player.y = ny;
+            drawGame();
+        }
+
+        function triggerMathQuiz() {
+            let maxVal = 10;
+            if (currentDiff === 'easy') maxVal = 10;
+            else if (currentDiff === 'medium') maxVal = 25;
+            else if (currentDiff === 'hard') maxVal = 50;
+            else if (currentDiff === 'extreme') maxVal = 100;
+
+            let op = currentOp;
+            if (op === 'mixed') {
+                const ops = ['+', '-', '*', '/'];
+                op = ops[Math.floor(Math.random() * ops.length)];
+            }
+
+            let n1 = 0, n2 = 0, qStr = "";
+
+            if (op === '+') {
+                n1 = Math.floor(Math.random() * maxVal) + 1;
+                n2 = Math.floor(Math.random() * maxVal) + 1;
+                activeAnswer = n1 + n2;
+                qStr = `${n1} + ${n2} = ?`;
+            } else if (op === '-') {
+                n1 = Math.floor(Math.random() * maxVal) + 1;
+                n2 = Math.floor(Math.random() * maxVal) + 1;
+                if (n1 < n2) { let t = n1; n1 = n2; n2 = t; }
+                activeAnswer = n1 - n2;
+                qStr = `${n1} - ${n2} = ?`;
+            } else if (op === '*') {
+                let mLimit = currentDiff === 'easy' ? 10 : (currentDiff === 'medium' ? 12 : 15);
+                n1 = Math.floor(Math.random() * mLimit) + 1;
+                n2 = Math.floor(Math.random() * mLimit) + 1;
+                activeAnswer = n1 * n2;
+                qStr = `${n1} × ${n2} = ?`;
+            } else if (op === '/') {
+                let divisorLimit = currentDiff === 'easy' ? 10 : 15;
+                n2 = Math.floor(Math.random() * divisorLimit) + 1;
+                let multiplier = Math.floor(Math.random() * divisorLimit) + 1;
+                n1 = n2 * multiplier;
+                activeAnswer = multiplier;
+                qStr = `${n1} ÷ ${n2} = ?`;
+            }
+
+            document.getElementById('q-text').innerText = qStr;
+            document.getElementById('feedback-msg').innerText = "";
+
+            let options = [activeAnswer];
+            while (options.length < 4) {
+                let offset = (Math.floor(Math.random() * 10) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                let wrong = activeAnswer + offset;
+                if (wrong >= 0 && !options.includes(wrong)) {
+                    options.push(wrong);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            let optContainer = document.getElementById('q-options');
+            optContainer.innerHTML = '';
+            options.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.className = "py-4 bg-slate-900 hover:bg-indigo-600 border-2 border-indigo-500/50 rounded-2xl text-2xl font-['Fredoka'] font-bold text-white transition-all transform active:scale-95 cursor-pointer shadow-md";
+                btn.innerText = opt;
+                btn.onclick = () => checkQuizAnswer(opt, btn);
+                optContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-modal').style.display = 'flex';
+        }
+
+        function checkQuizAnswer(selected, btnElement) {
+            let feedback = document.getElementById('feedback-msg');
+            if (selected === activeAnswer) {
+                feedback.innerText = "✅ Benar! Gerbang terbuka!";
+                feedback.className = "text-sm font-bold h-6 text-green-400";
+                score += 25;
+                
+                map[pendingGate.y][pendingGate.x] = 0;
+                player.x = pendingGate.x;
+                player.y = pendingGate.y;
+
+                setTimeout(() => {
+                    document.getElementById('quiz-modal').style.display = 'none';
+                    updateStats();
+                    drawGame();
+                }, 600);
+            } else {
+                feedback.innerText = "❌ Ups, jawaban kurang tepat. Coba lagi!";
+                feedback.className = "text-sm font-bold h-6 text-red-400";
+                btnElement.classList.add('bg-red-600/50', 'border-red-500');
+                
+                if (currentDiff === 'extreme' || currentDiff === 'hard') {
+                    lives--;
+                    updateStats();
+                    if (lives <= 0) {
+                        setTimeout(() => {
+                            document.getElementById('quiz-modal').style.display = 'none';
+                            showCustomAlert('💀 GAME OVER', 'Nyawa kamu habis! Tetap semangat belajar matematika ya.', '💔', () => {
+                                returnToMenu();
+                            });
+                        }, 800);
+                    }
+                }
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('level-val').innerText = level;
+            document.getElementById('lives-val').innerText = lives;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equilibrium: Math Balance - Arena Pertualangan</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --border-glow: #f59e0b;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+            color: var(--text-light);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border: 2px solid #334155;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.2);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .screen.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .lobby-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .lobby-header h1 {
+            color: var(--border-glow);
+            font-size: 1.8rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .section-group {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--border-glow);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #0f172a;
+            border: 2px solid #475569;
+            color: var(--text-light);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .option-btn:hover {
+            border-color: var(--border-glow);
+            background: #1e293b;
+        }
+        .option-btn.selected {
+            border-color: var(--border-glow);
+            background: linear-gradient(135deg, #b45309, #d97706);
+            color: white;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .btn-start {
+            width: 100%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #b45309;
+            transition: all 0.1s;
+            text-transform: uppercase;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+        .btn-start:hover { filter: brightness(1.1); }
+        .btn-start:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b45309;
+        }
+
+        .game-header {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .lives { color: var(--danger); }
+        .btn-back-menu {
+            background: #334155;
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+        .btn-back-menu:hover { background: #475569; }
+
+        .game-area {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .scale-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 240px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .scale-base {
+            position: absolute;
+            bottom: 0;
+            width: 32px;
+            height: 150px;
+            background: #475569;
+            border-radius: 16px 16px 0 0;
+            box-shadow: inset -4px 0 rgba(0,0,0,0.3);
+        }
+        
+        .scale-base::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -44px;
+            width: 120px;
+            height: 18px;
+            background: #334155;
+            border-radius: 10px;
+        }
+        
+        .scale-beam {
+            position: absolute;
+            top: 70px;
+            width: 340px;
+            height: 14px;
+            background: #cbd5e1;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center center;
+            display: flex;
+            justify-content: space-between;
+            z-index: 2;
+            border-radius: 7px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .plate {
+            position: absolute;
+            width: 140px;
+            height: 18px;
+            background: #94a3b8;
+            border-radius: 10px;
+            top: 15px; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 12px;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .plate.left { left: -70px; }
+        .plate.right { right: -70px; }
+        
+        .plate::before, .plate::after {
+            content: '';
+            position: absolute;
+            bottom: 12px;
+            width: 3px;
+            height: 65px;
+            background: #64748b;
+            z-index: -1;
+        }
+        .plate::before { left: 12px; transform: rotate(15deg); }
+        .plate::after { right: 12px; transform: rotate(-15deg); }
+
+        .target-block {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            font-size: 2.2rem;
+            font-weight: bold;
+            padding: 12px 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 0 #1e40af;
+            transform: translateY(-25px);
+        }
+
+        .slots-container {
+            display: flex;
+            gap: 6px;
+            transform: translateY(-25px);
+        }
+        
+        .slot {
+            width: 48px;
+            height: 48px;
+            border: 2px dashed #38bdf8;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .slot:hover { background: rgba(15, 23, 42, 1); transform: scale(1.05); }
+
+        .inventory {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 1px solid #334155;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            min-height: 110px;
+            align-items: center;
+        }
+
+        .block {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #78350f;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            box-shadow: 0 6px 0 #b45309;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .block:hover { transform: translateY(-2px); }
+        .block:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b45309;
+        }
+        .block.operator {
+            background: linear-gradient(135deg, #f97316, #c2410c);
+            color: white;
+            border-radius: 50%;
+            box-shadow: 0 6px 0 #7c2d12;
+        }
+        
+        .slot .block {
+            width: 44px;
+            height: 44px;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 0 #b45309;
+            transform: translateY(1px);
+            cursor: pointer;
+        }
+        .slot .block.operator {
+            box-shadow: 0 4px 0 #7c2d12;
+        }
+
+        .controls { text-align: center; }
+        
+        .btn-timbang {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #047857;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-timbang:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #047857; }
+        .btn-timbang:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #047857;
+        }
+        
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: fall 1.5s linear forwards;
+            z-index: 100;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        @media (max-width: 600px) {
+            .scale-container { transform: scale(0.85); margin-bottom: -15px; }
+            .block, .slot { width: 42px; height: 42px; font-size: 1.1rem; }
+            .game-header { flex-direction: column; align-items: center; gap: 10px; }
+            .target-block { font-size: 1.8rem; padding: 10px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: MENU / LOBI PENGATURAN -->
+    <div id="lobby-screen" class="screen active">
+        <!-- Tombol Kembali ke Menu Utama Portal -->
+        <div style="margin-bottom: 15px;">
+            <a href="../index.html" class="btn-back-menu">⬅️️ Menu Utama</a>
+        </div>
+
+        <div class="lobby-header">
+            <h1>⚙️ Pengaturan Timbangan Matematika</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Sesuaikan tantangan sebelum memulai petualangan!</p>
+        </div>
+
+        <div class="section-group">
+            <div class="section-title">1. Pilih Operasi Matematika:</div>
+            <div class="option-grid" id="op-options">
+                <button class="option-btn selected" onclick="selectOption('op', 'easy', this)">➕ ➖ Tambah / Kurang</button>
+                <button class="option-btn" onclick="selectOption('op', 'medium', this)">✖️ Perkalian</button>
+                <button class="option-btn" onclick="selectOption('op', 'hard', this)">⭐ Kombinasi (Hard)</button>
+                <button class="option-btn" onclick="selectOption('op', 'expert', this)">🔥 Tantangan Expert</button>
+            </div>
+        </div>
+
+        <div class="section-group">
+            <div class="section-title">2. Target Angka & Kotak Jawab:</div>
+            <div class="option-grid" id="slots-options">
+                <button class="option-btn selected" onclick="selectOption('slots', 3, this)">3 Kotak (Mudah)</button>
+                <button class="option-btn" onclick="selectOption('slots', 5, this)">5 Kotak (Kompleks)</button>
+            </div>
+        </div>
+
+        <button class="btn-start" onclick="startGame()">Mulai Pertandingan! 🚀</button>
+    </div>
+
+    <!-- SCREEN 2: GAMEPLAY ARENA -->
+    <div id="game-screen" class="screen" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+        <div class="game-header">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-back-menu" onclick="backToLobby()">⚙️ Pengaturan</button>
+                <a href="../index.html" class="btn-back-menu">🏠 Menu Utama</a>
+            </div>
+            <div class="stats">
+                <span class="score">Skor: <span id="score">0</span></span>
+                <span class="lives">Nyawa: <span id="lives">❤️❤️❤️</span></span>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="scale-container">
+                <div class="scale-base"></div>
+                <div class="scale-beam" id="beam">
+                    <div class="plate left" id="plate-left">
+                        <div class="target-block" id="target">24</div>
+                    </div>
+                    <div class="plate right" id="plate-right">
+                        <div class="slots-container" id="slots"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inventory" id="inventory"></div>
+
+        <div class="controls">
+            <button class="btn-timbang" id="btn-timbang">Timbang!</button>
+        </div>
+    </div>
+
+<script>
+    let gameConfig = {
+        opMode: 'easy',
+        slotCount: 3
+    };
+
+    let state = {
+        score: 0,
+        lives: 3
+    };
+    let currentQuestion = {};
+
+    const lobbyScreen = document.getElementById('lobby-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const elScore = document.getElementById('score');
+    const elLives = document.getElementById('lives');
+    const elTarget = document.getElementById('target');
+    const elSlots = document.getElementById('slots');
+    const elInventory = document.getElementById('inventory');
+    const elBeam = document.getElementById('beam');
+    const elPlateLeft = document.getElementById('plate-left');
+    const elPlateRight = document.getElementById('plate-right');
+    const btnTimbang = document.getElementById('btn-timbang');
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function playSound(type) {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        if (type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'success') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(554, now + 0.1);
+            osc.frequency.setValueAtTime(659, now + 0.2);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'fail') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        }
+    }
+
+    function selectOption(category, value, element) {
+        playSound('click');
+        const parent = element.parentElement;
+        Array.from(parent.children).forEach(btn => btn.classList.remove('selected'));
+        element.classList.add('selected');
+
+        if (category === 'op') gameConfig.opMode = value;
+        if (category === 'slots') gameConfig.slotCount = value;
+    }
+
+    function startGame() {
+        playSound('click');
+        lobbyScreen.classList.remove('active');
+        gameScreen.classList.add('active');
+        state.score = 0;
+        state.lives = 3;
+        updateLives();
+        generateQuestion();
+    }
+
+    function backToLobby() {
+        playSound('click');
+        gameScreen.classList.remove('active');
+        lobbyScreen.classList.add('active');
+    }
+
+    function generateQuestion() {
+        let diff = gameConfig.opMode;
+        let slotCount = gameConfig.slotCount;
+        let num1, num2, target, op;
+        let blocks = [];
+
+        if (diff === 'easy') {
+            slotCount = 3;
+            num1 = Math.floor(Math.random() * 10) + 1;
+            num2 = Math.floor(Math.random() * 10) + 1;
+            op = Math.random() > 0.5 ? '+' : '-';
+            if (op === '-' && num1 < num2) [num1, num2] = [num2, num1];
+            target = op === '+' ? num1 + num2 : num1 - num2;
+            blocks = [num1, op, num2, num1+1, op==='+'?'-':'+', num2+2];
+        } 
+        else if (diff === 'medium') {
+            slotCount = 3;
+            num1 = Math.floor(Math.random() * 9) + 2;
+            num2 = Math.floor(Math.random() * 9) + 2;
+            op = 'x';
+            target = num1 * num2;
+            blocks = [num1, op, num2, num1+1, '+', num2-1, '-'];
+        }
+        else if (diff === 'hard') {
+            slotCount = 5;
+            num1 = Math.floor(Math.random() * 6) + 2;
+            num2 = Math.floor(Math.random() * 6) + 2;
+            let num3 = Math.floor(Math.random() * 10) + 1;
+            target = (num1 * num2) + num3;
+            blocks = [num1, 'x', num2, '+', num3, '-', num1+1, 'x', num3+1];
+        }
+        else { 
+            slotCount = 5;
+            num1 = Math.floor(Math.random() * 8) + 3;
+            num2 = Math.floor(Math.random() * 6) + 2;
+            let num3 = Math.floor(Math.random() * 12) + 2;
+            target = (num1 * num2) - num3;
+            if (target < 5) target = num1 + num2 + num3;
+            blocks = [num1, 'x', num2, '-', num3, '+', num1-1, 'x', num3-1];
+        }
+
+        blocks.sort(() => Math.random() - 0.5);
+        currentQuestion = { target, blocks, slotCount };
+        renderLevel();
+    }
+
+    function renderLevel() {
+        elTarget.innerText = currentQuestion.target;
+        tiltBeam(0);
+        
+        elSlots.innerHTML = '';
+        for(let i=0; i<currentQuestion.slotCount; i++) {
+            let slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.onclick = () => removeBlockFromSlot(slot);
+            elSlots.appendChild(slot);
+        }
+
+        elInventory.innerHTML = '';
+        currentQuestion.blocks.forEach((val, i) => {
+            let btn = document.createElement('div');
+            btn.className = `block ${isNaN(val) ? 'operator' : ''}`;
+            btn.innerText = val === '*' ? 'x' : val;
+            btn.id = `block-${i}`;
+            btn.onclick = () => addBlockToSlot(btn);
+            elInventory.appendChild(btn);
+        });
+    }
+
+    function addBlockToSlot(blockEl) {
+        if (blockEl.style.display === 'none') return;
+        
+        playSound('click');
+        const slots = Array.from(elSlots.children);
+        const emptySlot = slots.find(s => s.children.length === 0);
+        
+        if (emptySlot) {
+            blockEl.style.display = 'none'; 
+            let clone = document.createElement('div');
+            clone.className = blockEl.className;
+            clone.innerText = blockEl.innerText;
+            clone.dataset.sourceId = blockEl.id;
+            
+            clone.onclick = (e) => {
+                e.stopPropagation();
+                returnBlockToInventory(clone);
+            };
+
+            emptySlot.appendChild(clone);
+        }
+    }
+
+    function removeBlockFromSlot(slotEl) {
+        if (slotEl.children.length > 0) {
+            const clone = slotEl.children[0];
+            returnBlockToInventory(clone);
+        }
+    }
+
+    function returnBlockToInventory(cloneEl) {
+        playSound('click');
+        const sourceId = cloneEl.dataset.sourceId;
+        if (sourceId) {
+            const sourceBlock = document.getElementById(sourceId);
+            if (sourceBlock) {
+                sourceBlock.style.display = 'flex';
+            }
+        }
+        cloneEl.remove();
+    }
+
+    function tiltBeam(degrees) {
+        elBeam.style.transform = `rotate(${degrees}deg)`;
+        elPlateLeft.style.transform = `rotate(${-degrees}deg)`;
+        elPlateRight.style.transform = `rotate(${-degrees}deg)`;
+    }
+
+    btnTimbang.onclick = () => {
+        const slots = Array.from(elSlots.children);
+        const isFull = slots.every(s => s.children.length > 0);
+        
+        if (!isFull) {
+            alert("Isi semua kotak jawaban terlebih dahulu!");
+            return;
+        }
+
+        let expr = '';
+        slots.forEach(s => {
+            let val = s.children[0].innerText;
+            if (val === 'x' || val === '✖️') val = '*';
+            expr += val;
+        });
+
+        let result = null;
+        try {
+            result = new Function('return ' + expr)();
+        } catch (e) {
+            result = null; 
+        }
+
+        if (result === currentQuestion.target) {
+            playSound('success');
+            tiltBeam(0);
+            createConfetti();
+            state.score += 100;
+            elScore.innerText = state.score;
+            
+            setTimeout(() => {
+                generateQuestion();
+            }, 1500);
+        } else {
+            playSound('fail');
+            
+            if (result === null || result < currentQuestion.target) {
+                tiltBeam(-12); 
+            } else {
+                tiltBeam(12); 
+            }
+            
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 500);
+
+            state.lives--;
+            updateLives();
+            
+            if (state.lives <= 0) {
+                setTimeout(() => {
+                    alert(`Game Over! Skor Akhir: ${state.score}`);
+                    backToLobby();
+                }, 1000);
+            } else {
+                setTimeout(() => tiltBeam(0), 1500);
+            }
+        }
+    };
+
+    function updateLives() {
+        let hearts = '';
+        for(let i=0; i<state.lives; i++) hearts += '❤';
+        elLives.innerText = hearts || '💀';
+    }
+
+    function createConfetti() {
+        const colors = ['#f1c40f', '#2ecc71', '#e74c3c', '#3498db'];
+        for(let i=0; i<40; i++) {
+            let conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = Math.random() * 100 + 'vw';
+            conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            conf.style.animationDuration = (Math.random() * 1 + 1) + 's';
+            document.body.appendChild(conf);
+            setTimeout(() => conf.remove(), 2500);
+        }
+    }
+</script>
+</body>
+</html>
